@@ -35,6 +35,9 @@ public class RobotContainer {
     private void configureButtonBindings() {
         JoystickButton ResetHeading = new JoystickButton(JOYSTICK_DRIVE_RIGHT, Constants.OI.RESET_HEADING);
         ResetHeading.whenPressed(new InstantCommand(DRIVETRAIN::resetHeading, DRIVETRAIN));
+
+        JoystickButton ResetCancoders = new JoystickButton(JOYSTICK_DRIVE_LEFT, Constants.OI.RESET_CANCODERS);
+        ResetCancoders.whenPressed(new InstantCommand(DRIVETRAIN::saveCancoderPosition, DRIVETRAIN));
     }
 
     /**

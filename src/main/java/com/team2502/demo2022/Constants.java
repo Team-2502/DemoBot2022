@@ -22,6 +22,7 @@ public final class Constants {
 
         // Driver Right
         public static final int RESET_HEADING = 2;
+        public static final int RESET_CANCODERS = 7;
 
         // Driver Left
         public static final int ALLIGN_LEFT = 3;

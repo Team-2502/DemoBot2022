@@ -23,6 +23,7 @@ public class DriveCommand extends CommandBase {
         RobotOrientedCenteredRot,
         VirtualTank,
         VirtualSplitArcade,
+        Righty,
     }
 
     private final SendableChooser<Drivetype> typeEntry = new SendableChooser<>();
@@ -37,6 +38,7 @@ public class DriveCommand extends CommandBase {
         typeEntry.addOption("Field Oriented", Drivetype.FieldOriented);
         typeEntry.addOption("nolan mode", Drivetype.RobotOrientedCenteredRot);
 	    typeEntry.addOption("Field Twist", Drivetype.FieldOrientedTwist);
+	    typeEntry.addOption("Righty", Drivetype.Righty);
         typeEntry.setDefaultOption("Robot Oriented", Drivetype.RobotOriented);
         SmartDashboard.putData("Drive Type", typeEntry);
 
@@ -73,6 +75,15 @@ public class DriveCommand extends CommandBase {
 		speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
 				-leftJoystick.getY() * Drivetrain.MAX_VEL,
 				-leftJoystick.getX() * Drivetrain.MAX_VEL,
+				rightJoystick.getZ() * Drivetrain.MAX_ROT,
+				Rotation2d.fromDegrees(-drivetrain.getHeading()));
+		centerOfRotation = new Translation2d(0, 0);
+		drivetrain.setSpeeds(speeds, centerOfRotation);
+                break;
+	    case Righty:
+		speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+				-rightJoystick.getY() * Drivetrain.MAX_VEL,
+				-rightJoystick.getX() * Drivetrain.MAX_VEL,
 				rightJoystick.getZ() * Drivetrain.MAX_ROT,
 				Rotation2d.fromDegrees(-drivetrain.getHeading()));
 		centerOfRotation = new Translation2d(0, 0);

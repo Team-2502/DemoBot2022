@@ -53,6 +53,11 @@ public class DrivetrainSubsystem extends SubsystemBase{
 
     private double currentPos;
 
+    private double frontRightOffset;
+    private double frontLeftOffset;
+    private double backRightOffset;
+    private double backLeftOffset;
+
     public DrivetrainSubsystem(){
         drivetrainPowerBackLeft = new WPI_TalonFX(HardwareMap.BL_DRIVE_MOTOR, "can0");
         drivetrainPowerFrontLeft = new WPI_TalonFX(HardwareMap.FL_DRIVE_MOTOR, "can0");
@@ -73,6 +78,11 @@ public class DrivetrainSubsystem extends SubsystemBase{
         drivetrainEncoderFrontLeft = new CANCoder(HardwareMap.FL_TURN_ENCODER);
         drivetrainEncoderFrontRight = new CANCoder(HardwareMap.FR_TURN_ENCODER);
         drivetrainEncoderBackRight = new CANCoder(HardwareMap.BR_TURN_ENCODER);
+
+        frontRightOffset = -drivetrainEncoderFrontRight.getAbsolutePosition();
+        frontLeftOffset = -drivetrainEncoderFrontLeft.getAbsolutePosition();
+        backRightOffset = -drivetrainEncoderBackRight.getAbsolutePosition();
+        backLeftOffset = -drivetrainEncoderBackLeft.getAbsolutePosition();
 
         Translation2d m_frontLeftLocation = new Translation2d(Drivetrain.SWERVE_WIDTH, Drivetrain.SWERVE_LENGTH);
         Translation2d m_frontRightLocation = new Translation2d(Drivetrain.SWERVE_WIDTH, -Drivetrain.SWERVE_LENGTH);
@@ -96,24 +106,35 @@ public class DrivetrainSubsystem extends SubsystemBase{
         //drive.setSafetyEnabled(false); // suppress "watchdog not fed" errors
     }
 
+    /* saveCancoderPosition
+     * changes the saved zero position of the swerve modules
+     * only call after manully aligning the modules
+     */
+    public void saveCancoderPosition() {
+        drivetrainEncoderFrontRight.configMagnetOffset(drivetrainEncoderFrontRight.getAbsolutePosition());
+        drivetrainEncoderFrontLeft.configMagnetOffset(drivetrainEncoderFrontLeft.getAbsolutePosition());
+        drivetrainEncoderBackRight.configMagnetOffset(drivetrainEncoderBackRight.getAbsolutePosition());
+        drivetrainEncoderBackLeft.configMagnetOffset(drivetrainEncoderBackLeft.getAbsolutePosition());
+    }
+
     public void setSpeeds(ChassisSpeeds speed, Translation2d centerOfRotation) {
         SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(speed, centerOfRotation);
 
         Rotation2d FLRotation = Rotation2d.fromDegrees(
             //drivetrainEncoderFrontLeft.getAlternateEncoder(Drivetrain.SWERVE_ENCODER_COUNTS_PER_REV).getPosition()/360
-            drivetrainTurnFrontLeft.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES
+            drivetrainTurnFrontLeft.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES + frontLeftOffset
         );
         Rotation2d FRRotation = Rotation2d.fromDegrees(
             //drivetrainEncoderFrontRight.getAlternateEncoder(Drivetrain.SWERVE_ENCODER_COUNTS_PER_REV).getPosition()/360
-            drivetrainTurnFrontRight.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES
+            drivetrainTurnFrontRight.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES + frontRightOffset
         );
         Rotation2d BLRotation = Rotation2d.fromDegrees(
             //drivetrainEncoderBackLeft.getAlternateEncoder(Drivetrain.SWERVE_ENCODER_COUNTS_PER_REV).getPosition()/360
-            drivetrainTurnBackLeft.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES
+            drivetrainTurnBackLeft.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES + backLeftOffset
         );
         Rotation2d BRRotation = Rotation2d.fromDegrees(
             //drivetrainEncoderBackRight.getAlternateEncoder(Drivetrain.SWERVE_ENCODER_COUNTS_PER_REV).getPosition()/360
-            drivetrainTurnBackRight.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES
+            drivetrainTurnBackRight.getSelectedSensorPosition() * Drivetrain.SWERVE_FALCON_ENCODER_COUNTS_TO_DEGREES + backRightOffset
         );
         
         SwerveModuleState FLState =
@@ -166,21 +187,6 @@ public class DrivetrainSubsystem extends SubsystemBase{
         drivetrainTurnFrontRight.stopMotor();
     }
 
-//    /**
-//    * Average drivetrain motor revs
-//    * @return double revs since restart
-//     */
-//    public double getRevsAvg() {
-//	    return (
-//			    -drivetrainFrontRight.getSelectedSensorPosition()+
-//			    drivetrainFrontLeft.getSelectedSensorPosition()
-//		   )/2;
-//    }
-//
-//    /**
-//    * inches since init
-//    * @return inches since initialization
-//     */
     public double getInchesTraveled() {
 	    return (drivetrainPowerFrontLeft.getSelectedSensorPosition() / Drivetrain.SWERVE_FALCON_TICKS_PER_INCH) / 1000;
     }
@@ -211,12 +217,7 @@ public class DrivetrainSubsystem extends SubsystemBase{
     public double getRpm() {
         return (drivetrainPowerFrontLeft.getSelectedSensorVelocity() / Drivetrain.SWERVE_FALCON_TICKS_PER_INCH);
     }
-//
-//    public double getHeading()
-//    {
-//        return Math.IEEEremainder(-navX.getAngle(), 360D);
-//    }
-//
+
     public void resetHeading() {
         navX.reset();
     }
@@ -238,11 +239,7 @@ public class DrivetrainSubsystem extends SubsystemBase{
     public void periodic(){
 
         SmartDashboard.putNumber("Angle", navX.getAngle());
-        //SmartDashboard.putNumber("RPM", getRpm());
 	    SmartDashboard.putNumber("fr temp", drivetrainPowerFrontRight.getTemperature());
-        //SmartDashboard.putBoolean("High Gear", getGear());
-        //SmartDashboard.putNumber("FL rotation", drivetrainTurnFrontLeft.getSelectedSensorPosition()/360);
-        //SmartDashboard.putNumber("FR Rotation", drivetrainTurnFrontRight.getSelectedSensorPosition()/360);
         SmartDashboard.putNumber("Avg Drivetrain Temp", getAverageTemp());
         SmartDashboard.putNumber("Inches Travled", getInchesTraveled());
     }
